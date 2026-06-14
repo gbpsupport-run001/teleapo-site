@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>麦わらの一味と テレアポ攻略</title>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBLol0cJqxdHraoCVn9wlAHLk4F929Sip4",
+    authDomain: "is-teleapo-site.firebaseapp.com",
+    projectId: "is-teleapo-site",
+    storageBucket: "is-teleapo-site.firebasestorage.app",
+    messagingSenderId: "87024686674",
+    appId: "1:87024686674:web:dcc6e64b76440f5774f18b",
+    measurementId: "G-NQWBE9R4RJ"
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // 認証状態の監視
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display  = 'block';
+      document.getElementById('user-email').textContent = user.email;
+    } else {
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('app-screen').style.display  = 'none';
+    }
+  });
+
+  // ログイン
+  window.doLogin = async () => {
+    const email = document.getElementById('email').value.trim();
+    const pass  = document.getElementById('password').value;
+    const errEl = document.getElementById('login-error');
+    const btn   = document.getElementById('login-btn');
+    errEl.textContent = '';
+    btn.textContent   = 'ログイン中...';
+    btn.disabled      = true;
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch(e) {
+      errEl.textContent = 'メールアドレスまたはパスワードが違います';
+      btn.textContent   = 'ログイン';
+      btn.disabled      = false;
+    }
+  };
+
+  // ログアウト
+  window.doLogout = async () => {
+    await signOut(auth);
+  };
+
+  // Enterキーでログイン
+  window.loginOnEnter = (e) => {
+    if (e.key === 'Enter') window.doLogin();
+  };
+</script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+  :root {
+    --ocean-deep:#0d2b4e; --ocean-mid:#1a5276; --ocean-lt:#2e86c1;
+    --sky:#aed6f1; --gold:#f39c12; --white:#ffffff; --muted:#5d6d7e;
+    --teal:#1abc9c; --purple:#8e44ad; --coral:#e74c3c;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:'Noto Sans JP',sans-serif;
+    background:var(--ocean-deep); color:var(--white);
+    min-height:100vh; overflow-x:hidden;
+  }
+
+  /* ===== ログイン画面 ===== */
+  #login-screen {
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:20px;
+    background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 100%);
+  }
+  .login-card {
+    background:rgba(255,255,255,0.07);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:20px; padding:36px 28px;
+    width:100%; max-width:360px;
+    backdrop-filter:blur(8px);
+    text-align:center;
+  }
+  .login-logo { font-size:48px; margin-bottom:8px; }
+  .login-title { font-size:18px; font-weight:900; margin-bottom:4px; }
+  .login-title span { color:var(--gold); }
+  .login-sub { font-size:11px; color:var(--sky); margin-bottom:28px; }
+  .login-label {
+    display:block; text-align:left;
+    font-size:11px; color:var(--sky); margin-bottom:4px; font-weight:500;
+  }
+  .login-input {
+    width:100%; padding:12px 14px;
+    background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.2);
+    border-radius:10px; color:white;
+    font-size:14px; font-family:'Noto Sans JP',sans-serif;
+    margin-bottom:14px; outline:none;
+    transition:border-color .2s;
+  }
+  .login-input:focus { border-color:var(--gold); }
+  .login-input::placeholder { color:rgba(255,255,255,0.3); }
+  .login-btn {
+    width:100%; padding:14px;
+    background:var(--gold); color:#1a1a2e;
+    border:none; border-radius:10px;
+    font-size:15px; font-weight:700;
+    font-family:'Noto Sans JP',sans-serif;
+    cursor:pointer; transition:all .2s;
+    margin-top:4px;
+  }
+  .login-btn:hover:not(:disabled) { background:#e67e22; transform:translateY(-1px); }
+  .login-btn:disabled { opacity:0.6; cursor:default; }
+  .login-error { color:#ff8a80; font-size:12px; margin-top:10px; min-height:18px; }
+  .login-footer { font-size:10px; color:rgba(255,255,255,0.3); margin-top:20px; }
+
+  /* ===== アプリ画面 ===== */
+  #app-screen { display:none; }
+
+  /* 波アニメ */
+  .sea { position:fixed; bottom:0; left:0; width:100%; height:100px; pointer-events:none; z-index:0; }
+  .wave {
+    position:absolute; bottom:0; left:0; width:200%; height:100%;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 60'%3E%3Cpath fill='%232e86c1' fill-opacity='0.4' d='M0,30 Q180,0 360,30 Q540,60 720,30 Q900,0 1080,30 Q1260,60 1440,30 L1440,60 L0,60Z'/%3E%3C/svg%3E") repeat-x;
+    animation:wave1 6s linear infinite;
+  }
+  .wave2 {
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 60'%3E%3Cpath fill='%231a5276' fill-opacity='0.5' d='M0,40 Q180,10 360,40 Q540,70 720,40 Q900,10 1080,40 Q1260,70 1440,40 L1440,60 L0,60Z'/%3E%3C/svg%3E") repeat-x;
+    animation:wave1 9s linear infinite reverse;
+  }
+  @keyframes wave1 { to { transform:translateX(-50%); } }
+
+  /* ヘッダー */
+  header {
+    position:relative; z-index:10;
+    background:linear-gradient(135deg,#0d1b2a 0%,#1a3a5c 100%);
+    border-bottom:2px solid var(--gold);
+    padding:14px 16px 12px;
+  }
+  .header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .header-badge {
+    display:inline-block; background:var(--gold); color:#1a1a2e;
+    font-size:9px; font-weight:700; padding:2px 10px; border-radius:20px;
+  }
+  .logout-btn {
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    color:rgba(255,255,255,0.7); font-size:10px; padding:4px 10px;
+    border-radius:20px; cursor:pointer; font-family:'Noto Sans JP',sans-serif;
+    transition:all .2s;
+  }
+  .logout-btn:hover { background:rgba(255,255,255,0.2); color:white; }
+  .user-info { font-size:9px; color:rgba(255,255,255,0.4); margin-bottom:6px; }
+  header h1 { font-size:clamp(16px,4vw,22px); font-weight:900; text-align:center; }
+  header h1 span { color:var(--gold); }
+  header p { font-size:10px; color:var(--sky); text-align:center; margin-top:4px; }
+
+  /* キャラ帯 */
+  .crew-strip {
+    position:relative; z-index:10;
+    background:rgba(255,255,255,0.05);
+    border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:10px 12px;
+    display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;
+  }
+  .crew-strip::-webkit-scrollbar { display:none; }
+  .crew-btn {
+    flex-shrink:0; background:rgba(255,255,255,0.08);
+    border:1.5px solid rgba(255,255,255,0.2); border-radius:12px;
+    padding:7px 10px; cursor:pointer; transition:all .2s; text-align:center; min-width:66px;
+  }
+  .crew-btn:hover,.crew-btn.active {
+    background:rgba(255,255,255,0.18); border-color:var(--gold); transform:translateY(-2px);
+  }
+  .crew-btn .emoji { font-size:22px; display:block; margin-bottom:2px; }
+  .crew-btn .cname { font-size:9px; color:var(--sky); font-weight:500; }
+  .crew-btn .crole { font-size:8px; font-weight:700; margin-top:1px; }
+
+  /* メイン */
+  main { position:relative; z-index:10; padding:14px 14px 160px; max-width:600px; margin:0 auto; }
+
+  /* フェーズ */
+  .phase-title { display:flex; align-items:center; gap:8px; margin:18px 0 8px; }
+  .phase-badge { display:inline-block; border-radius:20px; padding:3px 12px; font-size:10px; font-weight:700; color:white; }
+  .phase-title hr { flex:1; border:none; border-top:1px solid rgba(255,255,255,0.2); }
+
+  /* ステップカード */
+  .step-card {
+    border-radius:14px; padding:12px 14px; margin-bottom:9px;
+    border:1px solid rgba(255,255,255,0.15);
+    background:rgba(255,255,255,0.07);
+    backdrop-filter:blur(4px); transition:transform .15s;
+  }
+  .step-card:hover { transform:translateY(-1px); }
+  .step-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+  .step-head-left { display:flex; align-items:center; gap:8px; }
+  .step-char-icon {
+    width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; flex-shrink:0; border:1.5px solid rgba(255,255,255,0.3);
+  }
+  .step-info h3 { font-size:11px; font-weight:700; }
+  .step-info p  { font-size:9px; color:var(--sky); margin-top:1px; }
+  .voice-btn {
+    flex-shrink:0; background:var(--gold); color:#1a1a2e;
+    border:none; border-radius:20px; padding:6px 12px;
+    font-size:10px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; gap:3px; transition:all .15s;
+    font-family:'Noto Sans JP',sans-serif; white-space:nowrap;
+  }
+  .voice-btn:hover { background:#e67e22; transform:scale(1.04); }
+  .voice-btn.playing { background:#27ae60; animation:pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+  .step-desc { font-size:10px; color:rgba(255,255,255,0.75); line-height:1.7; }
+
+  /* 5基準グリッド */
+  .criteria-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin:7px 0; }
+  .crit-card {
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+    border-radius:10px; padding:7px 3px; text-align:center; cursor:pointer; transition:all .15s;
+  }
+  .crit-card:hover { background:rgba(255,215,0,0.15); border-color:var(--gold); transform:translateY(-2px); }
+  .crit-card .cem  { font-size:16px; }
+  .crit-card .cnm  { font-size:8px; font-weight:700; color:#d6bcfa; margin-top:2px; }
+  .crit-card .cdsc { font-size:6.5px; color:rgba(255,255,255,0.6); margin-top:1px; line-height:1.3; }
+
+  /* クリア基準 */
+  .clear-bar {
+    border-radius:10px; padding:7px 12px; font-size:10px;
+    font-weight:500; margin-bottom:6px;
+    display:flex; align-items:flex-start; gap:6px;
+  }
+
+  /* フェーズ色 */
+  .ph1-bg { background:rgba(26,188,156,0.12); border-color:rgba(26,188,156,0.4)!important; }
+  .ph1-lb { background:#1abc9c; }
+  .ph1-cl { background:rgba(26,188,156,0.15); color:#a8f0e0; border:1px solid rgba(26,188,156,0.3); }
+  .ph2-bg { background:rgba(142,68,173,0.12); border-color:rgba(142,68,173,0.4)!important; }
+  .ph2-lb { background:#8e44ad; }
+  .ph2-cl { background:rgba(142,68,173,0.15); color:#d9b3f5; border:1px solid rgba(142,68,173,0.3); }
+  .ph3-bg { background:rgba(231,76,60,0.12); border-color:rgba(231,76,60,0.4)!important; }
+  .ph3-lb { background:#e74c3c; }
+  .ph3-cl { background:rgba(231,76,60,0.15); color:#f5b7b1; border:1px solid rgba(231,76,60,0.3); }
+
+  /* 吹き出し */
+  #speech-bubble {
+    position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+    max-width:320px; width:calc(100% - 32px);
+    background:white; color:#1a1a2e;
+    border-radius:14px; padding:10px 14px;
+    font-size:12px; font-weight:500; line-height:1.6;
+    box-shadow:0 4px 24px rgba(0,0,0,0.4);
+    display:none; z-index:100; text-align:center;
+  }
+  #speech-bubble::after {
+    content:''; position:absolute; bottom:-9px; left:50%; transform:translateX(-50%);
+    border:9px solid transparent; border-top-color:white; border-bottom:0;
+  }
+  .bubble-char { font-size:10px; color:var(--muted); margin-bottom:3px; font-weight:700; }
+
+  /* フッターキャラ */
+  #active-char {
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:600px;
+    background:linear-gradient(0deg,#0d1b2a 60%,transparent);
+    padding:14px 20px 12px;
+    display:flex; align-items:center; justify-content:center;
+    gap:10px; z-index:99;
+  }
+  .active-emoji { font-size:40px; line-height:1; filter:drop-shadow(0 0 8px rgba(243,156,18,0.6)); }
+  .active-info { text-align:left; }
+  .active-name { font-size:12px; font-weight:700; color:var(--gold); }
+  .active-line { font-size:9px; color:var(--sky); margin-top:2px; }
+
+  @media (prefers-reduced-motion:reduce) {
+    .wave,.wave2 { animation:none; }
+    .voice-btn.playing { animation:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== ログイン画面 ===== -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">🏴‍☠️</div>
+    <div class="login-title">テレアポ <span>攻略</span> サイト</div>
+    <div class="login-sub">麦わらの一味と一緒にトップ営業を目指せ！</div>
+
+    <label class="login-label">メールアドレス</label>
+    <input id="email" class="login-input" type="email"
+      placeholder="example@email.com" onkeydown="loginOnEnter(event)">
+
+    <label class="login-label">パスワード</label>
+    <input id="password" class="login-input" type="password"
+      placeholder="パスワード" onkeydown="loginOnEnter(event)">
+
+    <button id="login-btn" class="login-btn" onclick="doLogin()">ログイン</button>
+    <div id="login-error" class="login-error"></div>
+    <div class="login-footer">アカウントはチームの管理者に確認してください</div>
+  </div>
+</div>
+
+<!-- ===== アプリ画面 ===== -->
+<div id="app-screen">
+
+  <div class="sea">
+    <div class="wave"></div>
+    <div class="wave wave2"></div>
+  </div>
+
+  <header>
+    <div class="header-top">
+      <span class="header-badge">🏴‍☠️ 麦わらの一味と一緒に！</span>
+      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+    </div>
+    <div class="user-info">ログイン中：<span id="user-email"></span></div>
+    <h1>テレアポ <span>完全攻略</span> ロードマップ</h1>
+    <p>読む → 伝える → まくる の3ステージでトップ営業を目指せ！</p>
+  </header>
+
+  <div class="crew-strip" id="crewStrip">
+    <button class="crew-btn" data-char="luffy" onclick="selectChar(this)">
+      <span class="emoji">🎩</span><span class="cname">ルフィ</span><span class="crole" style="color:#ff9999">船長</span>
+    </button>
+    <button class="crew-btn" data-char="zoro" onclick="selectChar(this)">
+      <span class="emoji">⚔️</span><span class="cname">ゾロ</span><span class="crole" style="color:#88ffbb">剣士</span>
+    </button>
+    <button class="crew-btn" data-char="nami" onclick="selectChar(this)">
+      <span class="emoji">🍊</span><span class="cname">ナミ</span><span class="crole" style="color:#ffe066">航海士</span>
+    </button>
+    <button class="crew-btn" data-char="sanji" onclick="selectChar(this)">
+      <span class="emoji">🍽️</span><span class="cname">サンジ</span><span class="crole" style="color:#fff">コック</span>
+    </button>
+    <button class="crew-btn" data-char="robin" onclick="selectChar(this)">
+      <span class="emoji">📚</span><span class="cname">ロビン</span><span class="crole" style="color:#cc99ff">考古学者</span>
+    </button>
+    <button class="crew-btn" data-char="brook" onclick="selectChar(this)">
+      <span class="emoji">🎸</span><span class="cname">ブルック</span><span class="crole" style="color:#aaaaff">音楽家</span>
+    </button>
+    <button class="crew-btn" data-char="franky" onclick="selectChar(this)">
+      <span class="emoji">🦾</span><span class="cname">フランキー</span><span class="crole" style="color:#88ccff">船大工</span>
+    </button>
+  </div>
+
+  <main>
+
+    <!-- フェーズ1 -->
+    <div class="phase-title">
+      <span class="phase-badge ph1-lb">フェーズ①</span>
+      <span style="font-size:12px;font-weight:700">読む</span><hr>
+    </div>
+
+    <div class="step-card ph1-bg">
+      <div class="step-head">
+        <div class="step-head-left">
+          <div class="step-char-icon" style="background:rgba(196,62,0,0.3)">🎩</div>
+          <div class="step-info"><h3>STEP 1｜復唱だけの練習</h3><p>担当：ルフィ</p></div>
+        </div>
+        <button class="voice-btn" onclick="speak(this,'luffy','step1')">🔊 聞く</button>
+      </div>
+      <p class="step-desc">相手の言葉をそのまま繰り返す。切り返しは一切しない。まず「聞けてるか」を確かめるのが目的だ。</p>
+    </div>
+
+    <div class="step-card ph1-bg">
+      <div class="step-head">
+        <div class="step-head-left">
+          <div class="step-char-icon" style="background:rgba(20,120,60,0.3)">⚔️</div>
+          <div class="step-info"><h3>STEP 2｜「なぜ？」だけを聞く</h3><p>担当：ゾロ</p></div>
+        </div>
+        <button class="voice-btn" onclick="speak(this,'zoro','step2')">🔊 聞く</button>
+      </div>
+      <p class="step-desc">復唱のあと「何かご経験がありましたか？」だけ追加。三刀流で斬るように、迷わずひと言だけ聞け。</p>
+    </div>
+
+    <div class="clear-bar ph1-cl">✅ クリア基準：「今の相手がなぜ断ったか」自分の言葉で説明できる</div>
+
+    <!-- フェーズ2 -->
+    <div class="phase-title">
+      <span class="phase-badge ph2-lb">フェーズ②</span>
+      <span style="font-size:12px;font-weight:700">伝える</span><hr>
+    </div>
+
+    <div class="step-card ph2-bg">
+      <div class="step-head">
+        <div class="step-head-left">
+          <div class="step-char-icon" style="background:rgba(240,160,20,0.3)">🍊</div>
+          <div class="step-info"><h3>STEP 3｜トークを体に染み込ませる</h3><p>担当：ナミ</p></div>
+        </div>
+        <button class="voice-btn" onclick="speak(this,'nami','step3')">🔊 聞く</button>
+      </div>
+      <p class="step-desc">航海図のように全ルートを頭に入れる。台本なしで最初から最後まで詰まらず言える状態にする。</p>
+    </div>
+
+    <div class="step-card ph2-bg">
+      <div class="step-head">
+        <div class="step-head-left">
+          <div class="step-char-icon" style="background:rgba(240,200,20,0.3)">🍽️</div>
+          <div class="step-info"><h3>STEP 4｜伝え方の5つの評価基準</h3><p>担当：サンジ</p></div>
+        </div>
+        <button class="voice-btn" onclick="speak(this,'sanji','step4')">🔊 聞く</button>
+      </div>
+      <div class="criteria-grid">
+        <div class="crit-card" onclick="speakCrit('speed')">
+          <div class="cem">⚡</div><div class="cnm">スピード</div><div class="cdsc">速すぎず遅すぎず</div>
+        </div>
+        <div class="crit-card" onclick="speakCrit('tone')">
+          <div class="cem">🎵</div><div class="cnm">トーン</div><div class="cdsc">明るく落ち着いて</div>
+        </div>
+        <div class="crit-card" onclick="speakCrit('ma')">
+          <div class="cem">⏸️</div><div class="cnm">間</div><div class="cdsc">大事な前に一呼吸</div>
+        </div>
+        <div class="crit-card" onclick="speakCrit('volume')">
+          <div class="cem">📢</div><div class="cnm">声量</div><div class="cdsc">はっきり通る声で</div>
+        </div>
+        <div class="crit-card" onclick="speakCrit('reaction')">
+          <div class="cem">💬</div><div class="cnm">リアクション</div><div class="cdsc">かしこまり以外も</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card ph2-bg">
+      <div class="step-head">
+        <div class="step-head-left">
+          <div class="step-char-icon" style="background:rgba(80,30,120,0.3)">📚</div>
+          <div class="step-info"><h3>STEP 5｜クロージングの型を固める</h3><p>担当：ロビン</p></div>
+        </div>
+        <button class="voice-btn" onclick="speak(this,'robin','step5')">🔊 聞く</button>
+      </div>
+      <p class="step-desc">日付確認 → 名前確認 → メアド取得 の順番を毎回同じに。「歴史は繰り返す」ように、型は崩さない。</p>
+    </div>
+
+    <div class="clear-bar ph2-cl">✅ クリア基準：自然な間とリアクションでラッキーパターンを最後まで通せる</div>
+
+    <!-- フェーズ3 -->
+    <div class="phase-title">
+      <span class="phase-badge ph3-lb">フェーズ③</span>
+      <span style="font-size:12px;font-weight:700">まくる（アウト返し）</span><hr>
+    </div>
+
+    <div class="step-card ph3-bg">
+      <div class="step-head">
+        <div class="step-head-left">
+          <div class="step-char-icon" style="background:rgba(20,20,20,0.5)">🎸</div>
+          <div class="step-info"><h3>易しい｜「お金かかるの？」への返し</h3><p>担当：ブルック</p></div>
+        </div>
+        <button class="voice-btn" onclick="speak(this,'brook','out1')">🔊 聞く</button>
+      </div>
+      <p class="step-desc">まずここをマスターする！内容を気に入っていただければ有料になるが、まずはお話だけ聞いてほしいと伝える。</p>
+    </div>
+
+    <div class="step-card ph3-bg">
+      <div class="step-head">
+        <div class="step-head-left">
+          <div class="step-char-icon" style="background:rgba(30,80,180,0.3)">🦾</div>
+          <div class="step-info"><h3>難しい｜「営業なら大丈夫」「HPから」</h3><p>担当：フランキー</p></div>
+        </div>
+        <button class="voice-btn" onclick="speak(this,'franky','out2')">🔊 聞く</button>
+      </div>
+      <p class="step-desc">フェーズ①②クリア後に挑戦！相手の心理を読んで、社長の時間を守ろうとする意識を理解することが大事。</p>
+    </div>
+
+    <div class="clear-bar ph3-cl">✅ まずは「お金かかるの？」への返しだけ先に固める！諦めんな！</div>
+
+  </main>
+
+  <!-- 吹き出し -->
+  <div id="speech-bubble">
+    <div class="bubble-char" id="bubble-char-name"></div>
+    <div id="bubble-text"></div>
+  </div>
+
+  <!-- フッターキャラ -->
+  <div id="active-char">
+    <div class="active-emoji" id="activeEmoji">🎩</div>
+    <div class="active-info">
+      <div class="active-name" id="activeName">ルフィ</div>
+      <div class="active-line" id="activeLine">ボタンをタップして声を聞こう！</div>
+    </div>
+  </div>
+
+</div><!-- /#app-screen -->
+
+<script>
+// ===== キャラクターデータ =====
+// 🔊 MP3に差し替える場合：audioUrls の各キーにFirebase StorageのURLを入れてください
+const audioUrls = {
+  luffy_step1: '',  // 例: 'https://firebasestorage.googleapis.com/.../luffy_step1.m4a'
+  luffy_idle:  '',
+  zoro_step2:  '',
+  zoro_idle:   '',
+  nami_step3:  '',
+  nami_idle:   '',
+  sanji_step4: '',
+  sanji_idle:  '',
+  robin_step5: '',
+  robin_idle:  '',
+  brook_out1:  '',
+  brook_idle:  '',
+  franky_out2: '',
+  franky_idle: '',
+};
+
+const chars = {
+  luffy:  { name:'ルフィ',    emoji:'🎩', pitch:1.4, rate:1.15,
+    lines:{ step1:'おれはできる！まず相手の言葉をそのまま繰り返せ！切り返しはいらねえ！まずは聞くことだ！', idle:'俺は海賊王になる男だ！お前も諦めんなよ！' }},
+  zoro:   { name:'ゾロ',     emoji:'⚔️', pitch:0.8, rate:0.95,
+    lines:{ step2:'迷うな。復唱したら、なぜかご経験がありましたか、だけ聞けばいい。それだけだ。', idle:'迷いは剣を鈍らせる。シンプルにいけ。' }},
+  nami:   { name:'ナミ',     emoji:'🍊', pitch:1.3, rate:1.1,
+    lines:{ step3:'航海図を頭に入れるのと同じ！トークは台本なしで最初から最後まで言えるようにすること！それが基本よ！', idle:'準備が全てよ！' }},
+  sanji:  { name:'サンジ',   emoji:'🍽️', pitch:1.1, rate:1.05,
+    lines:{ step4:'愛と情熱で届けろ！スピード、トーン、間、声量、リアクション！この5つが揃ったとき、相手の心に届くんだ！', idle:'素材の良さを最大限引き出せ！' }},
+  robin:  { name:'ロビン',   emoji:'📚', pitch:1.2, rate:0.9,
+    lines:{ step5:'歴史は繰り返します。日付確認、名前確認、メールアドレス取得。この順番を崩してはいけません。', idle:'型があれば、どんな相手にも対応できます。' }},
+  brook:  { name:'ブルック', emoji:'🎸', pitch:0.75, rate:0.9,
+    lines:{ out1:'お金のことを聞かれたら、内容を気に入っていただければ有料になりますが、まずお話だけ！と言うのじゃ！', idle:'骨だけになっても諦めませんよ！' }},
+  franky: { name:'フランキー',emoji:'🦾', pitch:0.9, rate:1.05,
+    lines:{ out2:'スーパー！相手の心理を読め！社長の時間を守ろうとしてるんだ！そこを理解してから突破口を探せ！', idle:'折れない心が一番の武器だぜ！' }},
+};
+
+const critLines = {
+  speed:   'スピード！早口すぎず遅すぎず。相手が聞き取りやすいテンポを意識しろ！',
+  tone:    'トーン！暗い声はダメだ。明るく、でも落ち着いた声で話せ！',
+  ma:      '間！大事な言葉の前に一秒の沈黙を入れろ。それだけで言葉の重さが変わる！',
+  volume:  '声量！小さすぎる声は信頼を失う。はっきり、通る声で届けろ！',
+  reaction:'リアクション！かしこまりましただけじゃダメだ。ありがとうございます、なるほどでございますも使え！',
+};
+
+let currentAudio = null;
+let currentBtn   = null;
+let bubbleTimer  = null;
+
+function getVoice() {
+  const vs = speechSynthesis.getVoices();
+  return vs.find(v=>v.lang==='ja-JP') || vs.find(v=>v.lang.startsWith('ja')) || vs[0];
+}
+
+function showBubble(charKey, text) {
+  const ch = chars[charKey];
+  document.getElementById('bubble-char-name').textContent = ch.emoji + ' ' + ch.name;
+  document.getElementById('bubble-text').textContent = text;
+  document.getElementById('speech-bubble').style.display = 'block';
+  clearTimeout(bubbleTimer);
+}
+function hideBubble() {
+  document.getElementById('speech-bubble').style.display = 'none';
+}
+function updateFooter(charKey) {
+  const ch = chars[charKey];
+  document.getElementById('activeEmoji').textContent = ch.emoji;
+  document.getElementById('activeName').textContent  = ch.name;
+  document.getElementById('activeLine').textContent  = ch.lines.idle;
+}
+
+function speak(btn, charKey, lineKey) {
+  // 再生中なら止める
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  if (currentBtn) { currentBtn.classList.remove('playing'); currentBtn.innerHTML='🔊 聞く'; }
+  if (currentBtn === btn) { currentBtn = null; hideBubble(); return; }
+
+  const ch   = chars[charKey];
+  const text = ch.lines[lineKey] || ch.lines.idle;
+  const urlKey = `${charKey}_${lineKey}`;
+  const url  = audioUrls[urlKey];
+
+  updateFooter(charKey);
+  showBubble(charKey, text);
+  btn.classList.add('playing');
+  btn.innerHTML = '🔊 再生中';
+  currentBtn = btn;
+
+  if (url) {
+    // MP3再生
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.play();
+    audio.onended = audio.onerror = () => {
+      btn.classList.remove('playing'); btn.innerHTML='🔊 聞く';
+      currentBtn = null; currentAudio = null;
+      bubbleTimer = setTimeout(hideBubble, 2000);
+    };
+  } else {
+    // SpeechSynthesis フォールバック
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ja-JP'; utter.pitch = ch.pitch; utter.rate = ch.rate;
+    const v = getVoice(); if(v) utter.voice = v;
+    utter.onend = utter.onerror = () => {
+      btn.classList.remove('playing'); btn.innerHTML='🔊 聞く';
+      currentBtn = null; bubbleTimer = setTimeout(hideBubble, 2000);
+    };
+    speechSynthesis.speak(utter);
+  }
+}
+
+function speakCrit(critKey) {
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  const text  = critLines[critKey];
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang='ja-JP'; utter.pitch=1.1; utter.rate=1.0;
+  const v=getVoice(); if(v) utter.voice=v;
+  showBubble('sanji', text); updateFooter('sanji');
+  speechSynthesis.speak(utter);
+}
+
+function selectChar(btn) {
+  document.querySelectorAll('.crew-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const charKey = btn.dataset.char;
+  updateFooter(charKey);
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  const ch    = chars[charKey];
+  const text  = ch.lines.idle;
+  const url   = audioUrls[`${charKey}_idle`];
+  showBubble(charKey, text);
+  if (url) {
+    const audio = new Audio(url); audio.play();
+    audio.onended = () => { bubbleTimer = setTimeout(hideBubble, 2000); };
+  } else {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang='ja-JP'; utter.pitch=ch.pitch; utter.rate=ch.rate;
+    const v=getVoice(); if(v) utter.voice=v;
+    utter.onend = () => { bubbleTimer = setTimeout(hideBubble, 2000); };
+    speechSynthesis.speak(utter);
+  }
+}
+
+speechSynthesis.getVoices();
+updateFooter('luffy');
+</script>
+</body>
+</html>
